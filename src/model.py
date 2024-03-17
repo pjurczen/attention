@@ -5,11 +5,11 @@ import math
 torch.manual_seed(1337)
 
 vocab_size = 65
-block_size = 32
-n_embed = 256
+block_size = 256
+n_embed = 384
 head_size = 32
-n_head = 4
-n_blocks = 8
+n_head = 6
+n_blocks = 12
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 dropout = 0.1
 
