@@ -1,0 +1,1 @@
+Repository containing implementations of attention based models including transformers based on the paper "Attention is all you need" from Deepmind and video tutorial of Andrej Karpathy: https://www.youtube.com/watch?v=kCc8FmEb1nY.
