@@ -4,16 +4,16 @@ from model import BigramLanguageModel, ModelConfig
 import os
 
 out_dir = '../output'
-init_from = 'resume' # 'scratch' or 'resume'
+init_from = 'scratch' # 'scratch' or 'resume'
 num_iters: int = 5000
 eval_iters: int = 200
 learning_rate: float = 3e-4
-batch_size: int = 8
-block_size: int = 512
+batch_size: int = 32
+block_size: int = 256
 vocab_size: int = 65
 n_blocks: int = 12
 n_head: int = 12
-n_embed: int = 768
+n_embed: int = 192
 dropout: float = 0.1
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -44,6 +44,7 @@ elif init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
     iter = checkpoint['iter']
     best_val_loss = checkpoint['best_val_loss']
+    checkpoint = None
 else:
     raise Exception(f"Mode {init_from} not supported")
 

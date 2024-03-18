@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.nn import functional as F
 import math
 from dataclasses import dataclass
-torch.manual_seed(1337)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
