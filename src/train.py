@@ -1,10 +1,28 @@
 import torch
-from model import BigramLanguageModel, device, block_size
+from model import BigramLanguageModel, ModelConfig
+import os
 
-num_iters = 5000
-eval_iters = 200
-learning_rate = 3e-4
-batch_size = 16
+out_dir = '../output'
+num_iters: int = 5000
+eval_iters: int = 200
+learning_rate: float = 3e-4
+batch_size: int = 16
+block_size: int = 256
+vocab_size: int = 65
+n_blocks: int = 12
+n_head: int = 12
+n_embed: int = 384
+dropout: float = 0.1
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
+config = {k: globals()[k] for k in config_keys}
+
+os.makedirs(out_dir, exist_ok=True)
+
+model_args = dict(block_size=block_size, vocab_size=vocab_size, n_blocks=n_blocks, n_head=n_head, n_embed=n_embed, dropout=dropout)
+model_config = ModelConfig(**model_args)
 
 with open('../data/tinyshakespeare/input.txt', 'r', encoding='UTF-8') as f:
     text = f.read()
@@ -35,7 +53,7 @@ def get_batch(split):
 def estimate_loss():
     out = {}
     model.eval()
-    for split in ['train', 'eval']:
+    for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
             x, y = get_batch(split)
@@ -47,14 +65,30 @@ def estimate_loss():
 
 
 
-model = BigramLanguageModel().to(device)
+model = BigramLanguageModel(model_config).to(device)
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-for i in range(num_iters):
-    if i % eval_iters == 0 or i == num_iters - 1:
+best_val_loss = 1e9
+
+for iter in range(num_iters):
+    if iter % eval_iters == 0 or iter == num_iters - 1:
         losses = estimate_loss()
-        print(f"step {i}: train loss {losses['train']:.4f}, eval loss {losses['eval']:.4f}")
+        print(f"step {iter}: train loss {losses['train']:.4f}, eval loss {losses['val']:.4f}")
+        if losses['val'] < best_val_loss:
+            best_val_loss = losses['val']
+            if iter > 0:
+                checkpoint = {
+                    'model': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'model_args': model_args,
+                    'iter': iter,
+                    'best_val_loss': best_val_loss,
+                    'config': config
+
+                }
+                print("saving checkpoint")
+                torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
     xb, yb = get_batch('train')
     logits, loss = model(xb, yb)
     optimizer.zero_grad()
