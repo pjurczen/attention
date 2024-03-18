@@ -1,0 +1,31 @@
+Initialize new model
+5.368961 M parameters
+step 0: train loss 4.3955, eval loss 4.3939
+step 200: train loss 2.4412, eval loss 2.4592  
+saving checkpoint
+step 400: train loss 2.3267, eval loss 2.3590
+saving checkpoint
+step 600: train loss 2.1084, eval loss 2.1814
+saving checkpoint
+step 800: train loss 1.9138, eval loss 2.0227  
+saving checkpoint
+step 1000: train loss 1.7456, eval loss 1.8816
+saving checkpoint
+step 1200: train loss 1.6576, eval loss 1.8239
+saving checkpoint
+step 1400: train loss 1.5863, eval loss 1.7682
+saving checkpoint
+step 1600: train loss 1.5122, eval loss 1.7120
+saving checkpoint
+step 1800: train loss 1.4594, eval loss 1.6632
+saving checkpoint
+step 2000: train loss 1.4389, eval loss 1.6527
+saving checkpoint
+step 2200: train loss 1.3929, eval loss 1.6149
+saving checkpoint
+step 2400: train loss 1.3606, eval loss 1.6023
+saving checkpoint
+step 2600: train loss 1.3453, eval loss 1.5867
+saving checkpoint
+step 2800: train loss 1.3211, eval loss 1.5789
+
