@@ -1,17 +1,19 @@
 import torch
+from torch._prims_common import check_pin_memory
 from model import BigramLanguageModel, ModelConfig
 import os
 
 out_dir = '../output'
+init_from = 'resume' # 'scratch' or 'resume'
 num_iters: int = 5000
 eval_iters: int = 200
 learning_rate: float = 3e-4
-batch_size: int = 16
-block_size: int = 256
+batch_size: int = 8
+block_size: int = 512
 vocab_size: int = 65
 n_blocks: int = 12
 n_head: int = 12
-n_embed: int = 384
+n_embed: int = 768
 dropout: float = 0.1
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -21,8 +23,30 @@ config = {k: globals()[k] for k in config_keys}
 
 os.makedirs(out_dir, exist_ok=True)
 
-model_args = dict(block_size=block_size, vocab_size=vocab_size, n_blocks=n_blocks, n_head=n_head, n_embed=n_embed, dropout=dropout)
-model_config = ModelConfig(**model_args)
+best_val_loss = 1e9
+iter = 0
+
+if init_from == 'scratch':
+    print("Initialize new model")
+    model_args = dict(block_size=block_size, vocab_size=vocab_size, n_blocks=n_blocks, n_head=n_head, n_embed=n_embed, dropout=dropout)
+    model_config = ModelConfig(**model_args)
+    model = BigramLanguageModel(model_config).to(device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+elif init_from == 'resume':
+    print("Resume training existing model")
+    ckpt_path = os.path.join(out_dir, 'ckpt.pt')
+    checkpoint = torch.load(ckpt_path, map_location=device)
+    model_args = checkpoint['model_args']
+    model_config = ModelConfig(**model_args)
+    model = BigramLanguageModel(model_config).to(device)
+    model.load_state_dict(checkpoint['model'])
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    iter = checkpoint['iter']
+    best_val_loss = checkpoint['best_val_loss']
+else:
+    raise Exception(f"Mode {init_from} not supported")
+
 
 with open('../data/tinyshakespeare/input.txt', 'r', encoding='UTF-8') as f:
     text = f.read()
@@ -64,14 +88,9 @@ def estimate_loss():
     return out
 
 
-
-model = BigramLanguageModel(model_config).to(device)
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-best_val_loss = 1e9
-
-for iter in range(num_iters):
+while True:
     if iter % eval_iters == 0 or iter == num_iters - 1:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, eval loss {losses['val']:.4f}")
@@ -85,7 +104,6 @@ for iter in range(num_iters):
                     'iter': iter,
                     'best_val_loss': best_val_loss,
                     'config': config
-
                 }
                 print("saving checkpoint")
                 torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
@@ -94,6 +112,11 @@ for iter in range(num_iters):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+    
+    iter += 1
+
+    if iter > num_iters:
+        break
 
 print(loss.item())
 
