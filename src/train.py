@@ -4,7 +4,7 @@ from model import BigramLanguageModel, ModelConfig
 import os
 
 out_dir = '../output'
-init_from = 'scratch' # 'scratch' or 'resume'
+init_from = 'resume' # 'scratch' or 'resume'
 num_iters: int = 5000
 eval_iters: int = 200
 learning_rate: float = 3e-4
