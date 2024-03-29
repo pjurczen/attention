@@ -1,6 +1,5 @@
 import torch
-from torch._prims_common import check_pin_memory
-from model import BigramLanguageModel, ModelConfig
+from model import GPTModel, GPTConfig
 import os
 
 out_dir = '../output'
@@ -29,16 +28,16 @@ iter = 0
 if init_from == 'scratch':
     print("Initialize new model")
     model_args = dict(block_size=block_size, vocab_size=vocab_size, n_blocks=n_blocks, n_head=n_head, n_embed=n_embed, dropout=dropout)
-    model_config = ModelConfig(**model_args)
-    model = BigramLanguageModel(model_config).to(device)
+    model_config = GPTConfig(**model_args)
+    model = GPTModel(model_config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 elif init_from == 'resume':
     print("Resume training existing model")
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
     checkpoint = torch.load(ckpt_path, map_location=device)
     model_args = checkpoint['model_args']
-    model_config = ModelConfig(**model_args)
-    model = BigramLanguageModel(model_config).to(device)
+    model_config = GPTConfig(**model_args)
+    model = GPTModel(model_config).to(device)
     model.load_state_dict(checkpoint['model'])
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     optimizer.load_state_dict(checkpoint['optimizer'])
