@@ -8,7 +8,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 @dataclass
-class ModelConfig:
+class GPTConfig:
     block_size: int = 256
     vocab_size: int = 65
     n_blocks: int = 12
@@ -19,7 +19,7 @@ class ModelConfig:
 
 class SingleAttentionHead(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: GPTConfig):
         super().__init__()
         self.head_size = config.n_embed // config.n_head
         self.key = nn.Linear(config.n_embed, self.head_size, bias=False)
@@ -44,7 +44,7 @@ class SingleAttentionHead(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: GPTConfig):
         super().__init__()
         self.heads = nn.ModuleList([SingleAttentionHead(config) for _ in range(config.n_head)])
         self.proj = nn.Linear(config.n_embed, config.n_embed)
@@ -59,7 +59,7 @@ class MultiHeadAttention(nn.Module):
 
 class FeedForward(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: GPTConfig):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(config.n_embed, 4*config.n_embed),
@@ -74,7 +74,7 @@ class FeedForward(nn.Module):
 
 class TransformerBlock(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: GPTConfig):
         super().__init__()
         self.self_attention = MultiHeadAttention(config)
         self.layer_norm_sa = nn.LayerNorm(config.n_embed)
@@ -87,9 +87,9 @@ class TransformerBlock(nn.Module):
         return x
 
 
-class BigramLanguageModel(nn.Module):
+class GPTModel(nn.Module):
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: GPTConfig):
         super().__init__()
         self.config = config
         self.token_embedding_table = nn.Embedding(config.vocab_size, config.n_embed)  # (C, n_embed)
